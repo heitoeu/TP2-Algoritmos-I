@@ -11,7 +11,6 @@ class Graph
 private:
     int n;
     vector<list<int>> g;
-    vector<vector<int>> capacidade;
     vector<vector<int>> capacidade_residual;
     // queue<int> users;
     // queue<int> jobs;
@@ -22,7 +21,7 @@ private:
 public:
     Graph(int num_vertices);
     void adicionar_aresta(int u, int v);
-    int Ed_karp();
+    int ford_fulkerson();
     int greedy();
 };
 

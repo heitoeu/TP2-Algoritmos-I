@@ -12,25 +12,25 @@ Graph::Graph(int num_vertices)
   this->s = num_vertices;
   this->t = num_vertices + 1;
   this->pai = vector<int>(n, -1);
-  this->capacidade = vector<vector<int>>(n, vector<int>(n, 0));
+  this->capacidade_residual = vector<vector<int>>(n, vector<int>(n, 0));
 }
 
 void Graph::adicionar_aresta(int u, int v)
 {
   g[u].push_back(v);
+  // cada emprego só pode ser escolhido por um usuário
+  capacidade_residual[u][v] = 1;
 
   // ligando o grafo bipartido na fonte e na chegada
   g[s].push_back(u);
-  capacidade[s][u] = INF;
+  capacidade_residual[s][u] = 1;
+
   g[v].push_back(t);
-  capacidade[v][t] = INF;
+  capacidade_residual[v][t] = 1;
 
   // greedy?
   //  users.push(u);
   //  jobs.push(v);
-
-  // cada emprego só pode ser escolhido por um usuário
-  capacidade[u][v] = 1;
 }
 
 bool Graph::BFS()
@@ -39,34 +39,38 @@ bool Graph::BFS()
   queue<int> q;
   q.push(s);
   visitados[s] = true;
+  pai[s] = -1;
+
   while (!q.empty())
   {
     int v = q.front();
     q.pop();
-    visitados[v] = true;
-    for (auto u : g[v])
+    for (int u = 0; u < n; u++)
     {
-      if (visitados[u] == false and capacidade_residual[u][v] > 0) // ainda pode passar fluxo
+      if (visitados[u] == false and capacidade_residual[v][u] > 0) // ainda pode passar fluxo
       {
+        if (u == t)
+        {
+          pai[u] = v;
+          return true;
+        }
+        visitados[u] = true;
         q.push(u);
         pai[u] = v;
       }
     }
   }
-  return (visitados[t]);
+  return false;
 }
 
-int Graph::Ed_karp()
+int Graph::ford_fulkerson()
 {
   int max_flow = 0;
-
-  // grafo residual
-  capacidade_residual = capacidade;
 
   // encontrar o caminho aumentante
   while (BFS())
   {
-    cout << "BFS!!" << endl;
+
     int fluxo_gargalo = INF;
     int v = t;
 
@@ -77,8 +81,6 @@ int Graph::Ed_karp()
       fluxo_gargalo = min(fluxo_gargalo, capacidade_residual[p][v]);
       v = p;
     }
-
-    max_flow += fluxo_gargalo;
 
     // atualizar as capacidades residuais
     v = t;
@@ -91,6 +93,8 @@ int Graph::Ed_karp()
       capacidade_residual[v][p] += fluxo_gargalo;
       v = p;
     }
+
+    max_flow += fluxo_gargalo;
   }
 
   return max_flow;
@@ -99,4 +103,5 @@ int Graph::Ed_karp()
 int Graph::greedy()
 {
   vector<list<int>> g_greedy = g;
+  return 10;
 }

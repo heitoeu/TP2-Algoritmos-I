@@ -1,55 +1,49 @@
 #include "graph.hpp"
 
 using namespace std;
-int adicionado(string u, vector<string> names, vector<int> names_num)
+vector<pair<string, int>> names;
+int k = 0;
+
+int get_index(string palavra)
 {
-    int n = names.size();
-    for (int i = 0; i < n; i++)
+    if (!names.empty())
     {
-        if (u == names[i])
+        for (auto n : names)
         {
-            return names_num[i];
+            if (n.first == palavra)
+            {
+                return n.second;
+            }
         }
+        int k_aux = k;
+        names.push_back({palavra, k_aux});
+        k++;
+        return k_aux;
     }
-    return -1;
+    else
+    {
+        names.push_back({palavra, 0});
+        k++;
+        return 0;
+    }
 }
 
 int main(int argc, char const *argv[])
 {
-    int user, job, user_job;
-    cin >> user >> job >> user_job;
-    Graph G(user + job);
-    vector<string> names;
-    vector<int> names_num;
-    int k = 0;
-    while (user_job--)
+    int usuarios, trabalhos, arestas;
+    cin >> usuarios >> trabalhos >> arestas;
+    Graph G(usuarios + trabalhos);
+
+    while (arestas--)
     {
-        int pos_u, pos_j;
-        string u, j;
-        cin >> u >> j;
-        pos_u = adicionado(u, names, names_num);
-        pos_j = adicionado(j, names, names_num);
+        string usuario, trabalho;
+        cin >> usuario >> trabalho;
 
-        if (pos_u == -1)
-        {
-            pos_u = k;
-            names.push_back(u);
-            names_num.push_back(k);
-            k++;
-        }
-        if (pos_j == -1)
-        {
-            pos_j = k;
-            names.push_back(j);
-            names_num.push_back(k);
-            k++;
-        }
-
-        G.adicionar_aresta(pos_u, pos_j);
+        G.adicionar_aresta(get_index(usuario), get_index(trabalho));
     }
 
     // cout << "Guloso: " << G.greedy() << endl;
-    cout << "Exato: " << G.Ed_karp() << endl;
+    cout << "Exato: " << G.ford_fulkerson() << endl;
 
     return 0;
 }
