@@ -5,103 +5,126 @@ using namespace std;
 
 Graph::Graph(int num_vertices)
 {
+  // Armazenar os vertices adicionais de saida e chegada (+2)
   this->n = num_vertices + 2;
-  this->g = vector<list<int>>(n);
+  this->grafo = vector<list<int>>(n);
+  this->grafo_residual = vector<list<int>>(n);
 
-  // armazenar os vertices adicionais de saida e chegada
-  this->s = num_vertices;
-  this->t = num_vertices + 1;
+  this->fonte = num_vertices;
+  this->terminal = num_vertices + 1;
   this->pai = vector<int>(n, -1);
   this->capacidade_residual = vector<vector<int>>(n, vector<int>(n, 0));
 }
 
-void Graph::adicionar_aresta(int u, int v)
+void Graph::adicionar_aresta(int usuario, int vaga)
 {
-  g[u].push_back(v);
-  // cada emprego só pode ser escolhido por um usuário
-  capacidade_residual[u][v] = 1;
+  // Adiciona as arestas do grafo original
+  grafo[usuario].push_back(vaga);
+  if (grafo[usuario].size() == 1)
+  {
+    usuarios.push(usuario);
+  }
 
-  // ligando o grafo bipartido na fonte e na chegada
-  g[s].push_back(u);
-  capacidade_residual[s][u] = 1;
+  // Adiciona as arestas do grafo residual
+  // Aresta original e de arrependimento
+  grafo_residual[usuario].push_back(vaga);
+  grafo_residual[vaga].push_back(usuario);
 
-  g[v].push_back(t);
-  capacidade_residual[v][t] = 1;
+  // Adiciona fonte e terminal no grafo residual
+  grafo_residual[fonte].push_back(usuario);
+  grafo_residual[vaga].push_back(terminal);
 
-  // greedy?
-  //  users.push(u);
-  //  jobs.push(v);
+  // Cada emprego só pode ser escolhido por um usuário
+  capacidade_residual[usuario][vaga] = 1;
+  capacidade_residual[fonte][usuario] = 1;
+  capacidade_residual[vaga][terminal] = 1;
 }
 
-bool Graph::BFS()
+// Solução gulosa
+int Graph::greedy()
 {
+  int guloso = 0;
   vector<int> visitados(n, false);
-  queue<int> q;
-  q.push(s);
-  visitados[s] = true;
-  pai[s] = -1;
-
-  while (!q.empty())
+  // Para cada usuario:
+  while (!usuarios.empty())
   {
-    int v = q.front();
-    q.pop();
-    for (int u = 0; u < n; u++)
+    int usuario = usuarios.front();
+    usuarios.pop();
+
+    for (auto vizinho : grafo[usuario])
     {
-      if (visitados[u] == false and capacidade_residual[v][u] > 0) // ainda pode passar fluxo
+      // Se ainda existe vaga de emprego escolha ela
+      if (visitados[vizinho] == false)
       {
-        if (u == t)
-        {
-          pai[u] = v;
-          return true;
-        }
-        visitados[u] = true;
-        q.push(u);
-        pai[u] = v;
+        guloso++;
+        visitados[vizinho] = true;
+        break;
       }
     }
   }
-  return false;
+  return guloso;
+}
+
+// Solução ótima com fluxo máximo
+bool Graph::BFS()
+{
+  vector<int> visitados(n, false);
+  queue<int> fila;
+  fila.push(fonte);
+  visitados[fonte] = true;
+
+  while (!fila.empty())
+  {
+    int w = fila.front();
+    fila.pop();
+
+    for (auto vizinho : grafo_residual[w])
+    {
+      // Encontrar o menor caminho aumentante disponível
+      if (visitados[vizinho] == false && capacidade_residual[w][vizinho] > 0)
+      {
+        visitados[vizinho] = true;
+        fila.push(vizinho);
+        pai[vizinho] = w;
+      }
+    }
+  }
+  // Retorna se foi possível chegar no terminal, ou seja, se existe caminho aumentante
+  return visitados[terminal];
 }
 
 int Graph::ford_fulkerson()
 {
-  int max_flow = 0;
+  int fluxo_max = 0;
 
-  // encontrar o caminho aumentante
+  // Enqunto existir caminho aumentante
   while (BFS())
   {
-
     int fluxo_gargalo = INF;
-    int v = t;
+    int temp = terminal;
 
-    // atualizar o fluxo
-    while (v != s)
+    // Atualizar o fluxo caminhando do terminal até a fonte
+    while (temp != fonte)
     {
-      int p = pai[v];
-      fluxo_gargalo = min(fluxo_gargalo, capacidade_residual[p][v]);
-      v = p;
+      int u = pai[temp];
+      fluxo_gargalo = min(fluxo_gargalo, capacidade_residual[u][temp]);
+      temp = u;
     }
 
-    // atualizar as capacidades residuais
-    v = t;
-    while (v != s)
+    // Atualizar as capacidades residuais
+    temp = terminal;
+    while (temp != fonte)
     {
-      int p = pai[v];
-      // foward edge
-      capacidade_residual[p][v] -= fluxo_gargalo;
-      // backward edge
-      capacidade_residual[v][p] += fluxo_gargalo;
-      v = p;
+      int u = pai[temp];
+      // Aresta original
+      capacidade_residual[u][temp] -= fluxo_gargalo;
+      // Aresta de arrependimento
+      capacidade_residual[temp][u] += fluxo_gargalo;
+      temp = u;
     }
 
-    max_flow += fluxo_gargalo;
+    fluxo_max += fluxo_gargalo;
   }
 
-  return max_flow;
-}
-
-int Graph::greedy()
-{
-  vector<list<int>> g_greedy = g;
-  return 10;
+  return fluxo_max;
 }

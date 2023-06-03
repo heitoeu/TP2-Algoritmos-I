@@ -10,19 +10,22 @@ class Graph
 {
 private:
     int n;
-    vector<list<int>> g;
+    int fonte, terminal;
+
+    vector<list<int>> grafo;
+    vector<list<int>> grafo_residual;
+
     vector<vector<int>> capacidade_residual;
-    // queue<int> users;
-    // queue<int> jobs;
     vector<int> pai;
-    int s, t;
+    queue<int> usuarios;
+
     bool BFS();
 
 public:
     Graph(int num_vertices);
-    void adicionar_aresta(int u, int v);
+    void adicionar_aresta(int usuario, int vaga);
     int ford_fulkerson();
     int greedy();
 };
 
-#endif // GRAPH_HPP
+#endif

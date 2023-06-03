@@ -1,10 +1,10 @@
 #include "graph.hpp"
 
-using namespace std;
 vector<pair<string, int>> names;
 int k = 0;
 
-int get_index(string palavra)
+// Pegar indice da pessoa/vaga de emprego
+int get_id(string palavra)
 {
     if (!names.empty())
     {
@@ -39,10 +39,10 @@ int main(int argc, char const *argv[])
         string usuario, trabalho;
         cin >> usuario >> trabalho;
 
-        G.adicionar_aresta(get_index(usuario), get_index(trabalho));
+        G.adicionar_aresta(get_id(usuario), get_id(trabalho));
     }
 
-    // cout << "Guloso: " << G.greedy() << endl;
+    cout << "Guloso: " << G.greedy() << endl;
     cout << "Exato: " << G.ford_fulkerson() << endl;
 
     return 0;
